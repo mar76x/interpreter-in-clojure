@@ -1,12 +1,11 @@
 (ns core.lexer
   (:require
-   [clojure.string :refer [join]]
-   [core.token :refer [tokens]]))
+   [clojure.string :refer [join]]))
 
 (defn new-lexer
   "given a char and a token collection, 
   it uses the char as key to get the correspondant 
-  token from col (if found else :IDENT); finally returns a lexer like a key value pair"
+  token from col (default is :IDENT); finally returns a lexer like a key value pair"
   [ch token-col]
   (let [k (get token-col ch)]
     (if k
@@ -19,7 +18,8 @@
 (def not-allowd-symbols (str "[^" allowed-words allowed-numbers allowed-symbols "\\s]"))
 
 (defn custom-filter
-  "build the regex filter to split the code into valid, more useful strings"
+  "builds a string that will be use as regex pattern to split the code into valid, 
+  and more useful strings"
   [& args]
   (str (join "|" args)))
 
@@ -41,9 +41,8 @@
 
 ;; main lexer function 
 (defn lexdeez!!
-  "receives an string input, convert it into a vector of words that follow defined
-  regex pattern, finally creates a lexer for every element of the vector and returns
-  it."
+  "receives a string input, converts it into a vector of 'words' that follow a specific
+  regex pattern then creates a lexer for every element of the vector and returns it."
   [token_col input]
   (->>
    input

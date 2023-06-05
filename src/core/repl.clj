@@ -7,7 +7,6 @@
 (defn run
   "this is a repl for monkey lang"
   []
-  (println "Ingrese codigo para el lexer:")
   (print ">> ")
   (flush)
   (let [buf (read-line)]
@@ -15,6 +14,7 @@
       (if (not= l nil)
         (do
           (println l)
-          (recur lexers))))))
+          (recur lexers))))
+    (run)))
 
 (run)
