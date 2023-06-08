@@ -1,15 +1,15 @@
-(ns lexer-test
+(ns core.lexer-test
   (:require
    [clojure.java.io :refer [resource reader]]
    [clojure.test :refer [deftest is testing]]
    [core.lexer :refer [lexdeez!!]]
    [core.token :refer [tokens]]))
 
-(defn read_txt [file_path]
-  (with-open [r (reader (resource file_path))]
+(defn read-txt [file-path]
+  (with-open [r (reader (resource file-path))]
     (apply str (line-seq r))))
 
-(deftest lexer_test_1
+(deftest lexer-test-1
   (testing "=+(){},;"
     (let [result ['(:ASSIGN "=")
                   '(:PLUS "+")
@@ -22,7 +22,7 @@
                   '(:EOF nil)]]
       (is (= (lexdeez!! tokens "=+(){},;") result)))))
 
-(deftest lexer_test_2
+(deftest lexer-test-2
   (testing "input_1.txt"
     (let [result ['(:LET "let")
                   '(:IDENT "five")
@@ -61,9 +61,9 @@
                   '(:RPAREN ")")
                   '(:SEMICOLON ";")
                   '(:EOF nil)]]
-      (is (= (lexdeez!! tokens (read_txt "input_1.txt")) result)))))
+      (is (= (lexdeez!! tokens (read-txt "input_1.txt")) result)))))
 
-(deftest lexer_test_3
+(deftest lexer-test-3
   (testing "input_2.txt"
     (let [result ['(:LET "let")
                   '(:IDENT "five")
@@ -139,4 +139,4 @@
                   '(:INT "9")
                   '(:SEMICOLON ";")
                   '(:EOF nil)]]
-      (is (= (lexdeez!! tokens (read_txt "input_2.txt")) result)))))
+      (is (= (lexdeez!! tokens (read-txt "input_2.txt")) result)))))

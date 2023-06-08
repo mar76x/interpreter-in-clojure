@@ -1,50 +1,63 @@
 (ns core.lexer
   (:require
-   [clojure.string :refer [join]]))
+   [clojure.java.io :refer [reader resource]]
+   [clojure.string :refer [join]]
+   [core.token :refer [tokens]]))
 
-(defn new-lexer
-  "given a char and a token collection, 
-  it uses the char as key to get the correspondant 
-  token from col (default is :IDENT); finally returns a lexer like a key value pair"
-  [ch token-col]
-  (let [k (get token-col ch)]
-    (if k
-      (list k ch)
-      (list :IDENT ch))))
-
-(def allowed-words "[A-Za-z]+")
+(def allowed-words "[A-Za-z0-9]+")
 (def allowed-numbers "[0-9]+")
-(def allowed-symbols "[!+={}(),;<>*/-]")
-(def not-allowd-symbols (str "[^" allowed-words allowed-numbers allowed-symbols "\\s]"))
+(def allowed-symbols "[!+={},;()<>*/-]|\\s")
 
-(defn custom-filter
-  "builds a string that will be use as regex pattern to split the code into valid, 
-  and more useful strings"
+(defn build-filter
   [& args]
   (str (join "|" args)))
 
-(defn chars-to-lexers
-  "it loops recursively over a string input and a result collection (first empty), 
-  reading two chars at a time; adds at least one lexer to result col and when a nil 
-  is found returns the result col"
+(defn new-token-char-tuple
+  [token-col ch]
+  (let [k (get token-col ch)]
+    (if (= k nil)
+      (list :IDENT ch)
+      (list k ch))))
+
+(defn read-chars
   [token-col input]
   (loop [[f & rest] input result []]
-    (let [s (first rest)] ;; not removing s yet
+    (let [s (first rest)] ;; s is still in rest
       (cond
-        (= f nil) (conj result '(:EOF nil))
-        (and (= f "=") (= s "=")) (recur (drop 1 rest) (conj result (list :EQ "==")))
-        (and (= f "!") (= s "=")) (recur (drop 1 rest) (conj result (list :NOT_EQ "!=")))
-        (re-matches (re-pattern allowed-numbers) f) (recur rest (conj result (list :INT f)))
-        (re-matches (re-pattern allowed-words) f) (recur rest (conj result (new-lexer f token-col)))
-        (re-matches (re-pattern allowed-symbols) f) (recur rest (conj result (new-lexer f token-col)))
+        (= f nil) (conj result (list :EOF nil))
+
+        (= f " ") (recur rest result)
+
+        (and (= f "=") (= s "="))
+        (recur (drop 1 rest) (conj result (list :EQ "==")))
+
+        (and (= f "!") (= s "="))
+        (recur (drop 1 rest) (conj result (list :NOT_EQ "!=")))
+
+        (re-matches (re-pattern allowed-numbers) f)
+        (recur rest (conj result (list :INT f)))
+
+        (re-matches (re-pattern allowed-words) f)
+        (recur rest (conj result (new-token-char-tuple token-col f)))
+
+        (re-matches (re-pattern allowed-symbols) f)
+        (recur rest (conj result (new-token-char-tuple token-col f)))
+
         :else (recur rest (conj result (list :ILLEGAL f)))))))
 
-;; main lexer function 
+;; main lexer function
 (defn lexdeez!!
-  "receives a string input, converts it into a vector of 'words' that follow a specific
-  regex pattern then creates a lexer for every element of the vector and returns it."
+  "[token-col s]
+  given a collection of valid tokens and a string, splits the string into a list of words and then
+  for each element generates a list of (token, literal) tuples using the token-col to validate."
   [token_col input]
-  (->>
-   input
-   (re-seq (re-pattern (custom-filter allowed-words allowed-numbers allowed-symbols not-allowd-symbols)))
-   (chars-to-lexers token_col)))
+  (->> (or (re-seq (re-pattern (build-filter allowed-words allowed-numbers allowed-symbols)) input)
+           (not (re-seq (re-pattern (build-filter allowed-words allowed-numbers allowed-symbols)) input)))
+       (read-chars token_col)))
+
+(comment
+  (defn read-txt [file-path]
+    (with-open [r (reader (resource file-path))]
+      (apply str (line-seq r))))
+
+  (lexdeez!! tokens (read-txt "input_2.txt")))
